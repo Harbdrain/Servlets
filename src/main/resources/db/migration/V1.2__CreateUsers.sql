@@ -1,0 +1,8 @@
+CREATE TABLE fileserver.users (
+	id INT NOT NULL UNIQUE AUTO_INCREMENT,
+	name VARCHAR(255),
+	PRIMARY KEY(id)
+)
+ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
