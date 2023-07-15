@@ -1,16 +1,20 @@
 package com.danil.servlets.service.common;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.danil.servlets.model.User;
+import com.danil.servlets.repository.EventRepository;
 import com.danil.servlets.repository.UserRepository;
 import com.danil.servlets.service.UserService;
 
 public class UserServiceImpl implements UserService {
     UserRepository userRepository = null;
+    EventRepository eventRepository = null;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, EventRepository eventRepository) {
         this.userRepository = userRepository;
+        this.eventRepository = eventRepository;
     }
 
     @Override
@@ -47,5 +51,16 @@ public class UserServiceImpl implements UserService {
         }
 
         return userRepository.getById(id);
+    }
+
+    @Override
+    public List<User> getAllLazy() {
+        return userRepository.getAllLazy();
+    }
+
+    @Override
+    public void deleteById(Integer id) {
+        eventRepository.deleteByUserId(id);
+        userRepository.deleteById(id);
     }
 }

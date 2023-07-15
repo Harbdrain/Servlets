@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.util.List;
 
 import com.danil.servlets.model.Event;
 import com.danil.servlets.model.File;
@@ -26,7 +28,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet(name = "WebServlet", value = "/files/*")
 public class FileServlet extends HttpServlet {
-    FileService fileService = new FileServiceImpl(new HibernateFileRepositoryImpl());
+    FileService fileService = new FileServiceImpl(new HibernateFileRepositoryImpl(), new HibernateEventRepositoryImpl());
     EventService eventService = new EventServiceImpl(new HibernateFileRepositoryImpl(),
             new HibernateUserRepositoryImpl(), new HibernateEventRepositoryImpl());
 
@@ -35,7 +37,7 @@ public class FileServlet extends HttpServlet {
             throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
         if (pathInfo == null || "/".equals(pathInfo)) {
-            response.sendError(400);
+            doGetAll(request, response);
             return;
         }
 
@@ -47,7 +49,20 @@ public class FileServlet extends HttpServlet {
             response.sendError(404);
             return;
         }
+        doGetSingle(request, response, fileId);
+    }
 
+    private void doGetAll(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+        List<File> files = fileService.getAll();
+        PrintWriter writer = response.getWriter();
+        for (File file : files) {
+            writer.println(file.getId() + ": " + file.getName());
+        }
+    }
+
+    private void doGetSingle(HttpServletRequest request, HttpServletResponse response, Integer fileId)
+            throws IOException, ServletException {
         Integer userId = null;
         try {
             userId = Integer.parseInt(request.getParameter("user_id"));
@@ -124,4 +139,25 @@ public class FileServlet extends HttpServlet {
         response.getWriter().println("OK");
     }
 
+    @Override
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String pathInfo = request.getPathInfo();
+        if (pathInfo == null || "/".equals(pathInfo)) {
+            response.sendError(400);
+            return;
+        }
+
+        Integer fileId = null;
+        try {
+            fileId = Integer.parseInt(pathInfo, 1, pathInfo.endsWith("/") ? pathInfo.length() - 1 : pathInfo.length(),
+                    10);
+        } catch (NumberFormatException e) {
+            response.sendError(404);
+            return;
+        }
+
+        fileService.deleteById(fileId);
+        response.getWriter().println("OK");
+    }
 }

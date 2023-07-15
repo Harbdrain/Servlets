@@ -1,15 +1,20 @@
 package com.danil.servlets.service.common;
 
+import java.util.List;
+
 import com.danil.servlets.model.File;
+import com.danil.servlets.repository.EventRepository;
 import com.danil.servlets.repository.FileRepository;
 import com.danil.servlets.service.FileService;
 import com.danil.servlets.utils.FileUtils;
 
 public class FileServiceImpl implements FileService {
     FileRepository fileRepository = null;
+    EventRepository eventRepository = null;
 
-    public FileServiceImpl(FileRepository fileRepository) {
+    public FileServiceImpl(FileRepository fileRepository, EventRepository eventRepository) {
         this.fileRepository = fileRepository;
+        this.eventRepository = eventRepository;
     }
 
     @Override
@@ -39,5 +44,16 @@ public class FileServiceImpl implements FileService {
 
         file.setName(name);
         return fileRepository.update(file);
+    }
+
+    @Override
+    public List<File> getAll() {
+        return fileRepository.getAll();
+    }
+
+    @Override
+    public void deleteById(Integer id) {
+        eventRepository.deleteByFileId(id);
+        fileRepository.deleteById(id);
     }
 }

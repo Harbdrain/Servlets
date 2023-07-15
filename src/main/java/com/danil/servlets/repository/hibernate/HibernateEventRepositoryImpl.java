@@ -40,4 +40,36 @@ public class HibernateEventRepositoryImpl implements EventRepository {
     public Event getByIdLazy(Integer id) {
         throw new UnsupportedOperationException("Unimplemented method 'getByIdLazy'");
     }
+
+    @Override
+    public void deleteByFileId(Integer fileId) {
+        Transaction transaction = null;
+        try (Session session = RepositoryUtils.getSession()) {
+            transaction = session.beginTransaction();
+            session.createNativeMutationQuery("DELETE FROM events WHERE file_id = :id").setParameter("id", fileId).executeUpdate();
+            session.flush();
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw e;
+        }
+    }
+
+    @Override
+    public void deleteByUserId(Integer userId) {
+        Transaction transaction = null;
+        try (Session session = RepositoryUtils.getSession()) {
+            transaction = session.beginTransaction();
+            session.createNativeMutationQuery("DELETE FROM events WHERE user_id = :id").setParameter("id", userId).executeUpdate();
+            session.flush();
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw e;
+        }
+    }
 }

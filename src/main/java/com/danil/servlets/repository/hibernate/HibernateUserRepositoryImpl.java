@@ -1,5 +1,7 @@
 package com.danil.servlets.repository.hibernate;
 
+import java.util.List;
+
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
@@ -80,5 +82,39 @@ public class HibernateUserRepositoryImpl implements UserRepository {
         }
 
         return user;
+    }
+
+    @Override
+    public List<User> getAllLazy() {
+        Transaction transaction = null;
+        List<User> files = null;
+        try (Session session = RepositoryUtils.getSession()) {
+            transaction = session.beginTransaction();
+            files = session.createSelectionQuery("FROM User", User.class).list();
+            session.flush();
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw e;
+        }
+        return files;
+    }
+
+    @Override
+    public void deleteById(Integer id) {
+        Transaction transaction = null;
+        try (Session session = RepositoryUtils.getSession()) {
+            transaction = session.beginTransaction();
+            session.createMutationQuery("DELETE User WHERE id = :id").setParameter("id", id).executeUpdate();
+            session.flush();
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw e;
+        }
     }
 }
