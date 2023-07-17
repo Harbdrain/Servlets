@@ -6,10 +6,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.danil.servlets.model.Event;
 import com.danil.servlets.model.File;
+import com.danil.servlets.model.dto.FileDto;
 import com.danil.servlets.repository.hibernate.HibernateEventRepositoryImpl;
 import com.danil.servlets.repository.hibernate.HibernateFileRepositoryImpl;
 import com.danil.servlets.repository.hibernate.HibernateUserRepositoryImpl;
@@ -17,6 +19,8 @@ import com.danil.servlets.service.EventService;
 import com.danil.servlets.service.FileService;
 import com.danil.servlets.service.common.EventServiceImpl;
 import com.danil.servlets.service.common.FileServiceImpl;
+import com.danil.servlets.utils.ServletUtils;
+import com.google.gson.Gson;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletInputStream;
@@ -26,46 +30,49 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet(name = "WebServlet", value = "/files/*")
+@WebServlet(name = "FileServlet", value = "/files/*")
 public class FileServlet extends HttpServlet {
-    FileService fileService = new FileServiceImpl(new HibernateFileRepositoryImpl(), new HibernateEventRepositoryImpl());
-    EventService eventService = new EventServiceImpl(new HibernateFileRepositoryImpl(),
+    private final FileService fileService = new FileServiceImpl(new HibernateFileRepositoryImpl(),
+            new HibernateEventRepositoryImpl());
+    private final EventService eventService = new EventServiceImpl(new HibernateFileRepositoryImpl(),
             new HibernateUserRepositoryImpl(), new HibernateEventRepositoryImpl());
+    private final Gson gson = new Gson();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
-        if (pathInfo == null || "/".equals(pathInfo)) {
-            doGetAll(request, response);
-            return;
-        }
-
         Integer fileId = null;
         try {
-            fileId = Integer.parseInt(pathInfo, 1, pathInfo.endsWith("/") ? pathInfo.length() - 1 : pathInfo.length(),
-                    10);
+            fileId = ServletUtils.getIdFromPathInfo(pathInfo);
         } catch (NumberFormatException e) {
             response.sendError(404);
             return;
         }
-        doGetSingle(request, response, fileId);
+
+        if (fileId == null) {
+            doGetAll(request, response);
+        } else {
+            doGetSingle(request, response, fileId);
+        }
     }
 
     private void doGetAll(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
+
         List<File> files = fileService.getAll();
+        List<FileDto> filesDto = new ArrayList<>();
+        files.forEach(file -> filesDto.add(FileDto.create(file)));
+
         PrintWriter writer = response.getWriter();
-        for (File file : files) {
-            writer.println(file.getId() + ": " + file.getName());
-        }
+        writer.println(gson.toJson(files));
     }
 
     private void doGetSingle(HttpServletRequest request, HttpServletResponse response, Integer fileId)
             throws IOException, ServletException {
         Integer userId = null;
         try {
-            userId = Integer.parseInt(request.getParameter("user_id"));
+            userId = Integer.parseInt(request.getHeader("x-user-id"));
         } catch (NumberFormatException e) {
             response.sendError(400, "Bad parameter");
             return;
@@ -87,7 +94,16 @@ public class FileServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        if (request.getPathInfo() != null && !"/".equals(request.getPathInfo())) {
+        String pathInfo = request.getPathInfo();
+        Integer fileId = null;
+        try {
+            fileId = ServletUtils.getIdFromPathInfo(pathInfo);
+        } catch (NumberFormatException e) {
+            response.sendError(400);
+            return;
+        }
+
+        if (fileId != null) {
             response.sendError(400);
             return;
         }
@@ -111,16 +127,16 @@ public class FileServlet extends HttpServlet {
     protected void doPut(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
-        if (pathInfo == null || "/".equals(pathInfo)) {
-            response.sendError(400);
+        Integer fileId = null;
+        try {
+            fileId = ServletUtils.getIdFromPathInfo(pathInfo);
+        } catch (NumberFormatException e) {
+            response.sendError(404);
             return;
         }
 
-        Integer id = null;
-        try {
-            id = Integer.parseInt(pathInfo, 1, pathInfo.endsWith("/") ? pathInfo.length() - 1 : pathInfo.length(), 10);
-        } catch (NumberFormatException e) {
-            response.sendError(404);
+        if (fileId == null) {
+            response.sendError(400);
             return;
         }
 
@@ -130,7 +146,7 @@ public class FileServlet extends HttpServlet {
             return;
         }
 
-        File file = fileService.update(id, name);
+        File file = fileService.update(fileId, name);
         if (file == null) {
             response.sendError(404);
             return;
@@ -143,17 +159,16 @@ public class FileServlet extends HttpServlet {
     protected void doDelete(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
-        if (pathInfo == null || "/".equals(pathInfo)) {
-            response.sendError(400);
+        Integer fileId = null;
+        try {
+            fileId = ServletUtils.getIdFromPathInfo(pathInfo);
+        } catch (NumberFormatException e) {
+            response.sendError(404);
             return;
         }
 
-        Integer fileId = null;
-        try {
-            fileId = Integer.parseInt(pathInfo, 1, pathInfo.endsWith("/") ? pathInfo.length() - 1 : pathInfo.length(),
-                    10);
-        } catch (NumberFormatException e) {
-            response.sendError(404);
+        if (fileId == null) {
+            response.sendError(400);
             return;
         }
 

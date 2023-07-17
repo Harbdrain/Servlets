@@ -31,16 +31,9 @@ public class HibernateUserRepositoryImpl implements UserRepository {
     @Override
     public User getByIdLazy(Integer id) {
         User user = null;
-        Transaction transaction = null;
         try (Session session = RepositoryUtils.getSession()) {
-            transaction = session.beginTransaction();
             user = session.get(User.class, id);
-            session.flush();
-            transaction.commit();
         } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
             throw e;
         }
 
@@ -68,16 +61,9 @@ public class HibernateUserRepositoryImpl implements UserRepository {
     @Override
     public User getById(Integer id) {
         User user = null;
-        Transaction transaction = null;
         try (Session session = RepositoryUtils.getSession()) {
-            transaction = session.beginTransaction();
-            user = session.createSelectionQuery("FROM User u LEFT JOIN FETCH u.events e JOIN FETCH e.file WHERE u.id = :id", User.class).setParameter("id", id).getSingleResultOrNull();
-            session.flush();
-            transaction.commit();
+            user = session.createSelectionQuery("FROM User u LEFT JOIN FETCH u.events e LEFT JOIN FETCH e.file WHERE u.id = :id", User.class).setParameter("id", id).getSingleResultOrNull();
         } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
             throw e;
         }
 
@@ -86,17 +72,10 @@ public class HibernateUserRepositoryImpl implements UserRepository {
 
     @Override
     public List<User> getAllLazy() {
-        Transaction transaction = null;
         List<User> files = null;
         try (Session session = RepositoryUtils.getSession()) {
-            transaction = session.beginTransaction();
             files = session.createSelectionQuery("FROM User", User.class).list();
-            session.flush();
-            transaction.commit();
         } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
             throw e;
         }
         return files;

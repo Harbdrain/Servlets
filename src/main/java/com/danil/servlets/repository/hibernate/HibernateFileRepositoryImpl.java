@@ -49,16 +49,9 @@ public class HibernateFileRepositoryImpl implements FileRepository {
     @Override
     public File getById(Integer id) {
         File file = null;
-        Transaction transaction = null;
         try (Session session = RepositoryUtils.getSession()) {
-            transaction = session.beginTransaction();
             file = session.get(File.class, id);
-            session.flush();
-            transaction.commit();
         } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
             throw e;
         }
 
@@ -72,17 +65,10 @@ public class HibernateFileRepositoryImpl implements FileRepository {
 
     @Override
     public List<File> getAll() {
-        Transaction transaction = null;
         List<File> files = null;
         try (Session session = RepositoryUtils.getSession()) {
-            transaction = session.beginTransaction();
             files = session.createSelectionQuery("FROM File", File.class).list();
-            session.flush();
-            transaction.commit();
         } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
             throw e;
         }
         return files;
