@@ -30,7 +30,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet(name = "FileServlet", value = "/files/*")
+@WebServlet(name = "FileServlet", value = "/api/v1/files/*")
 public class FileServlet extends HttpServlet {
     private final FileService fileService = new FileServiceImpl(new HibernateFileRepositoryImpl(),
             new HibernateEventRepositoryImpl());

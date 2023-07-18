@@ -21,7 +21,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet(name = "UserServlet", value = "/users/*")
+@WebServlet(name = "UserServlet", value = "/api/v1/users/*")
 public class UserServlet extends HttpServlet {
     private final UserService userService = new UserServiceImpl(new HibernateUserRepositoryImpl(),
             new HibernateEventRepositoryImpl());
